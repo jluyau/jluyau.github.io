@@ -54061,6 +54061,10 @@ var agentLookup = {
     icon: require('./img/agents/breach/breach.png'),
     abilities: [{
       type: 'basic',
+      tool: 'line',
+      color: 'brown',
+      length: 370,
+      width: 30,
       name: 'Aftershock',
       icon: require('./img/agents/breach/aftershock.png')
     }, {
@@ -54262,8 +54266,8 @@ var agentLookup = {
       type: 'basic',
       name: 'Leer',
       tool: 'circle',
-      radius: 30,
-      stroke: 'purple',
+      radius: 290,
+      stroke: 'yellow',
       icon: require('./img/agents/reyna/leer.png')
     }, {
       type: 'basic',
@@ -54393,6 +54397,8 @@ var canvasY = 1024;
 exports.canvasY = canvasY;
 var abilityIconSize = 20;
 exports.abilityIconSize = abilityIconSize;
+},{}],"src/img/spike.png":[function(require,module,exports) {
+module.exports = "/spike.ea872497.png";
 },{}],"src/components/canvas/canvasFunctions.jsx":[function(require,module,exports) {
 "use strict";
 
@@ -54460,6 +54466,7 @@ function addLine(context, pt1, pt2, size, color, length, icon) {
   context.lineTo.apply(context, _toConsumableArray(pt2));
   context.lineWidth = size;
   context.strokeStyle = color;
+  context.stroke();
 
   if (icon) {
     var iconPoint = getDistancedPoint(pt1, pt2, length / 2);
@@ -54467,8 +54474,6 @@ function addLine(context, pt1, pt2, size, color, length, icon) {
 
     addAbilityIcon(context, iconPoint[0], iconPoint[1], icon);
   }
-
-  context.stroke();
 }
 
 function addArrow(context, fromx, fromy, tox, toy, color) {
@@ -54496,10 +54501,11 @@ function addArrow(context, fromx, fromy, tox, toy, color) {
 
 function addText(context, x, y, size, text) {
   var color = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 'black';
+  context.beginPath();
   context.fillStyle = color;
-  context.textAlign = 'center';
-  context.fillText(text, x, y);
+  context.textAlign = 'left';
   context.font = size + 'px arial';
+  context.fillText(text, x, y);
   context.stroke();
   return {
     tool: 'text',
@@ -54544,23 +54550,11 @@ function addCircle(context, x, y, radius, text, bgcolor, stroke) {
   };
 }
 
-function addSpike(context, x, y, size, color) {
-  var path = new Path2D();
-  context.beginPath();
-  path.moveTo(x, y - size / 2); // top of the triangle
-
-  path.lineTo(x - size / 2, y + size / 2); // bottom left of the triangle
-
-  path.lineTo(x + size / 2, y + size / 2); // bottom right of the triangle
-
-  context.fillStyle = color;
-  context.fill(path);
-  addCircle(context, x, y + size / 8, size / 8, null, 'darkgrey', null);
+function addSpike(context, x, y) {
+  addImage(context, x, y, 30, 30, require('../../img/spike.png'));
   return {
     tool: 'spike',
-    center: [x, y],
-    size: size,
-    color: color
+    center: [x, y]
   };
 }
 
@@ -54650,7 +54644,7 @@ function addAnchorPoint(context, x, y, color) {
   addCircle(context, x, y, 3, null, null, color);
   addCircle(context, x, y, 6, null, null, color);
 }
-},{"../../agents":"src/agents.jsx","../../constants":"src/constants.jsx"}],"src/components/ValostratorContext.jsx":[function(require,module,exports) {
+},{"../../agents":"src/agents.jsx","../../constants":"src/constants.jsx","../../img/spike.png":"src/img/spike.png"}],"src/components/ValostratorContext.jsx":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -54889,7 +54883,26 @@ var _react = _interopRequireDefault(require("react"));
 function Erase(props) {
   return /*#__PURE__*/_react.default.createElement(_icon.Icon, props, /*#__PURE__*/_react.default.createElement(_Erase.A4uErase, null));
 }
-},{"@babel/runtime/helpers/interopRequireDefault":"node_modules/@babel/runtime/helpers/interopRequireDefault.js","@adobe/react-spectrum-workflow/dist/Erase":"node_modules/@adobe/react-spectrum-workflow/dist/Erase.js","@react-spectrum/icon":"node_modules/@react-spectrum/icon/dist/module.js","react":"node_modules/react/index.js"}],"src/components/History.jsx":[function(require,module,exports) {
+},{"@babel/runtime/helpers/interopRequireDefault":"node_modules/@babel/runtime/helpers/interopRequireDefault.js","@adobe/react-spectrum-workflow/dist/Erase":"node_modules/@adobe/react-spectrum-workflow/dist/Erase.js","@react-spectrum/icon":"node_modules/@react-spectrum/icon/dist/module.js","react":"node_modules/react/index.js"}],"src/components/Changelog.jsx":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = Changelog;
+
+var _reactSpectrum = require("@adobe/react-spectrum");
+
+var _react = _interopRequireDefault(require("react"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function Changelog() {
+  return /*#__PURE__*/_react.default.createElement(_reactSpectrum.DialogTrigger, null, /*#__PURE__*/_react.default.createElement(_reactSpectrum.ActionButton, {
+    isQuiet: true
+  }, "Changelog"), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Dialog, null, "hello"));
+}
+},{"@adobe/react-spectrum":"node_modules/@adobe/react-spectrum/dist/module.js","react":"node_modules/react/index.js"}],"src/components/History.jsx":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -54908,6 +54921,8 @@ var _Close = _interopRequireDefault(require("@spectrum-icons/workflow/Close"));
 var _Undo = _interopRequireDefault(require("@spectrum-icons/workflow/Undo"));
 
 var _Erase = _interopRequireDefault(require("@spectrum-icons/workflow/Erase"));
+
+var _Changelog = _interopRequireDefault(require("./Changelog"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -54935,7 +54950,8 @@ function History() {
 
   var disabledHistoryKeys = !history.length ? ['undo'] : [];
   var disableClear = !history.length ? ['clear'] : [];
-  return /*#__PURE__*/_react.default.createElement(_reactSpectrum.View, {
+  return /*#__PURE__*/_react.default.createElement(_reactSpectrum.Flex, {
+    direction: "column",
     width: 400
   }, /*#__PURE__*/_react.default.createElement(_reactSpectrum.Flex, null, /*#__PURE__*/_react.default.createElement(_reactSpectrum.ActionGroup, {
     onAction: onHistoryChange,
@@ -54951,7 +54967,8 @@ function History() {
     key: "clear",
     textValue: "clear"
   }, /*#__PURE__*/_react.default.createElement(_Erase.default, null), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Text, null, "Clear board")))), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Flex, {
-    direction: "column"
+    direction: "column",
+    flexGrow: 1
   }, history.map(function (item, i) {
     return /*#__PURE__*/_react.default.createElement(_reactSpectrum.Flex, {
       alignItems: "center",
@@ -54961,9 +54978,11 @@ function History() {
       onPress: removeHistoryEvent.bind(null, i),
       isQuiet: true
     }, /*#__PURE__*/_react.default.createElement(_Close.default, null)), renderEvent(item));
-  })));
+  })), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Flex, {
+    justifyContent: "end"
+  }, /*#__PURE__*/_react.default.createElement(_Changelog.default, null)));
 }
-},{"react":"node_modules/react/index.js","@adobe/react-spectrum":"node_modules/@adobe/react-spectrum/dist/module.js","./ValostratorContext":"src/components/ValostratorContext.jsx","@spectrum-icons/workflow/Close":"node_modules/@spectrum-icons/workflow/Close.js","@spectrum-icons/workflow/Undo":"node_modules/@spectrum-icons/workflow/Undo.js","@spectrum-icons/workflow/Erase":"node_modules/@spectrum-icons/workflow/Erase.js"}],"node_modules/@adobe/react-spectrum-workflow/dist/Properties.js":[function(require,module,exports) {
+},{"react":"node_modules/react/index.js","@adobe/react-spectrum":"node_modules/@adobe/react-spectrum/dist/module.js","./ValostratorContext":"src/components/ValostratorContext.jsx","@spectrum-icons/workflow/Close":"node_modules/@spectrum-icons/workflow/Close.js","@spectrum-icons/workflow/Undo":"node_modules/@spectrum-icons/workflow/Undo.js","@spectrum-icons/workflow/Erase":"node_modules/@spectrum-icons/workflow/Erase.js","./Changelog":"src/components/Changelog.jsx"}],"node_modules/@adobe/react-spectrum-workflow/dist/Properties.js":[function(require,module,exports) {
 /**
 * @adobe/react-spectrum-workflow (c) by Adobe
 * 
@@ -55252,13 +55271,18 @@ function Valostrator() {
 
     switch (tool) {
       case 'arrow':
-        if (!createArrow) {
-          setCreateArrow([xCoord, yCoord]);
+        if (!startPoint) {
+          setStartPoint([xCoord, yCoord]);
+          (0, _canvasFunctions.addAnchorPoint)(ctx, xCoord, yCoord, color);
           return;
         }
 
-        historyEvent = (0, _canvasFunctions.addArrow)(ctx, createArrow[0], createArrow[1], xCoord, yCoord, color);
-        setCreateArrow(false);
+        redrawHistory(history, {
+          useTeamColor: useTeamColor,
+          showIcons: showIcons
+        });
+        historyEvent = (0, _canvasFunctions.addArrow)(ctx, startPoint[0], startPoint[1], xCoord, yCoord, color);
+        setStartPoint(null);
         break;
 
       case 'agent':
@@ -55272,7 +55296,7 @@ function Valostrator() {
           if (abilityObj.tool === 'line') {
             if (!startPoint) {
               setStartPoint([xCoord, yCoord]);
-              (0, _canvasFunctions.addAnchorPoint)(ctx, xCoord, yCoord, 'cyan');
+              (0, _canvasFunctions.addAnchorPoint)(ctx, xCoord, yCoord, abilityObj.color);
               return;
             } else {
               redrawHistory(history, {
@@ -55298,7 +55322,7 @@ function Valostrator() {
         break;
 
       case 'spike':
-        historyEvent = (0, _canvasFunctions.addSpike)(ctx, xCoord, yCoord, 16, 'gray');
+        historyEvent = (0, _canvasFunctions.addSpike)(ctx, xCoord, yCoord);
         break;
 
       case 'text':
@@ -55306,6 +55330,7 @@ function Valostrator() {
           textRef.current.focus();
         }
 
+        (0, _canvasFunctions.addAnchorPoint)(ctx, xCoord, yCoord, color);
         setAcceptingText([xCoord, yCoord]);
         break;
 
@@ -55333,6 +55358,8 @@ function Valostrator() {
     clearCanvas();
     var ctx = ref.current.getContext('2d');
     history.map(function (evt) {
+      console.log('evt', evt);
+
       switch (evt.tool) {
         case 'arrow':
           (0, _canvasFunctions.addArrow)(ctx, evt.start[0], evt.start[1], evt.end[0], evt.end[1], evt.color);
@@ -55363,7 +55390,7 @@ function Valostrator() {
           return;
 
         case 'spike':
-          (0, _canvasFunctions.addSpike)(ctx, evt.center[0], evt[1], evt.size, evt.color);
+          (0, _canvasFunctions.addSpike)(ctx, evt.center[0], evt[1]);
           return;
       }
     });
@@ -55431,10 +55458,15 @@ function Valostrator() {
     console.log('evtkeycode', evt.keyCode);
 
     if (evt.keyCode === 13) {
-      console.log('submitting', evt.target.value);
-      var ctx = ref.current.getContext('2d');
-      (0, _canvasFunctions.addText)(ctx, acceptText[0], acceptText[1], size, evt.target.value, color);
       setAcceptingText(null);
+      console.log('submitting', evt.target.value);
+      redrawHistory(history, {
+        showIcons: showIcons,
+        useTeamColor: useTeamColor
+      });
+      var ctx = ref.current.getContext('2d');
+      var historyEvent = (0, _canvasFunctions.addText)(ctx, acceptText[0], acceptText[1], size, evt.target.value, color);
+      setHistory([historyEvent].concat(_toConsumableArray(history)));
       evt.target.value = '';
     }
   };
@@ -55503,7 +55535,7 @@ function Valostrator() {
     gap: 20,
     marginBottom: 8
   }, /*#__PURE__*/_react.default.createElement(_reactSpectrum.ActionGroup, {
-    isEmphasized: createArrow,
+    isEmphasized: startPoint,
     onAction: onToolChange,
     selectionMode: "single",
     selectedKeys: [tool]
@@ -55686,7 +55718,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53156" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57664" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
