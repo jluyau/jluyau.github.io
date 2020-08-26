@@ -54517,7 +54517,7 @@ function addText(context, x, y, size, text) {
 }
 
 function addCircle(context, x, y, radius, text, bgcolor, stroke) {
-  console.log('circle', bgcolor, stroke);
+  console.log('circle', radius, text, bgcolor, stroke);
   context.beginPath();
   context.arc(x, y, radius, 0, 2 * Math.PI);
 
@@ -54534,11 +54534,11 @@ function addCircle(context, x, y, radius, text, bgcolor, stroke) {
 
   if (stroke) {
     context.strokeStyle = stroke;
-    context.lineWidth = 2;
   } else {
     context.strokeStyle = bgcolor;
   }
 
+  context.lineWidth = 2;
   context.stroke();
   return {
     tool: 'circle',
@@ -54978,9 +54978,9 @@ function History() {
       onPress: removeHistoryEvent.bind(null, i),
       isQuiet: true
     }, /*#__PURE__*/_react.default.createElement(_Close.default, null)), renderEvent(item));
-  })), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Flex, {
-    justifyContent: "end"
-  }, /*#__PURE__*/_react.default.createElement(_Changelog.default, null)));
+  }))); // <Flex justifyContent="end">
+  //   <Changelog />
+  // </Flex>
 }
 },{"react":"node_modules/react/index.js","@adobe/react-spectrum":"node_modules/@adobe/react-spectrum/dist/module.js","./ValostratorContext":"src/components/ValostratorContext.jsx","@spectrum-icons/workflow/Close":"node_modules/@spectrum-icons/workflow/Close.js","@spectrum-icons/workflow/Undo":"node_modules/@spectrum-icons/workflow/Undo.js","@spectrum-icons/workflow/Erase":"node_modules/@spectrum-icons/workflow/Erase.js","./Changelog":"src/components/Changelog.jsx"}],"node_modules/@adobe/react-spectrum-workflow/dist/Properties.js":[function(require,module,exports) {
 /**
@@ -55718,7 +55718,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57664" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55967" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
