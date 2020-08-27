@@ -54384,7 +54384,7 @@ exports.agentLookup = agentLookup;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.abilityIconSize = exports.canvasY = exports.canvasX = exports.defaultPalette = exports.colorDefenders = exports.colorAttackers = void 0;
+exports.sizing = exports.abilityIconSize = exports.canvasY = exports.canvasX = exports.defaultPalette = exports.colorDefenders = exports.colorAttackers = void 0;
 var colorAttackers = '#699287';
 exports.colorAttackers = colorAttackers;
 var colorDefenders = '#c37364';
@@ -54397,6 +54397,21 @@ var canvasY = 1024;
 exports.canvasY = canvasY;
 var abilityIconSize = 20;
 exports.abilityIconSize = abilityIconSize;
+var sizing = {
+  pencil: {
+    S: 1,
+    M: 2,
+    L: 5,
+    XL: 10
+  },
+  default: {
+    S: 10,
+    M: 20,
+    L: 30,
+    XL: 50
+  }
+};
+exports.sizing = sizing;
 },{}],"src/img/spike.png":[function(require,module,exports) {
 module.exports = "/spike.ea872497.png";
 },{}],"src/components/canvas/canvasFunctions.jsx":[function(require,module,exports) {
@@ -54405,6 +54420,8 @@ module.exports = "/spike.ea872497.png";
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.addPoint = addPoint;
+exports.addPath = addPath;
 exports.addLine = addLine;
 exports.addArrow = addArrow;
 exports.addText = addText;
@@ -54444,6 +54461,40 @@ function getDistancedPoint(pt1, pt2, length) {
   }
 
   return pt2;
+}
+
+function addPoint(context, x, y, size, color) {
+  var offset = size > 1 ? size / 2 : 0; // addRect(context, x - offset, y - offset, size, size, color);
+
+  console.log("".concat(x - offset, ", ").concat(y - offset, " ").concat(size, " ").concat(color));
+  context.beginPath();
+  context.lineCap = "square";
+  context.rect(x - offset, y - offset, size, size);
+  context.strokeStyle = color;
+  context.lineWidth = size;
+  context.stroke();
+}
+
+function addPath(context, path, size, color) {
+  context.beginPath();
+  context.lineWidth = size;
+  context.lineJoin = 'round';
+  context.strokeStyle = color;
+  path.forEach(function (pt, i) {
+    if (i === 0) {
+      context.moveTo.apply(context, _toConsumableArray(pt));
+      return;
+    }
+
+    context.lineTo.apply(context, _toConsumableArray(pt));
+  });
+  context.stroke();
+  return {
+    tool: 'pencil',
+    path: path,
+    size: size,
+    color: color
+  };
 } // todo need to handle negative angle (going NW or SW
 
 
@@ -54517,7 +54568,6 @@ function addText(context, x, y, size, text) {
 }
 
 function addCircle(context, x, y, radius, text, bgcolor, stroke) {
-  console.log('circle', radius, text, bgcolor, stroke);
   context.beginPath();
   context.arc(x, y, radius, 0, 2 * Math.PI);
 
@@ -54643,7 +54693,8 @@ function addAgentLineItem(ability, context, start, end, agent, side, opts) {
 function addAnchorPoint(context, x, y, color) {
   addCircle(context, x, y, 3, null, null, color);
   addCircle(context, x, y, 6, null, null, color);
-}
+} // ctx.shadowColor = color
+// ctx.shadowBlur = num
 },{"../../agents":"src/agents.jsx","../../constants":"src/constants.jsx","../../img/spike.png":"src/img/spike.png"}],"src/components/ValostratorContext.jsx":[function(require,module,exports) {
 "use strict";
 
@@ -54933,9 +54984,23 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 var renderEvent = function renderEvent(event) {
   var toolName = event.tool;
 
-  if (event.tool === 'agent') {
-    var side = event.side === 'a' ? 'Attackers' : 'Defenders';
-    toolName += " (".concat(event.agent, " - ").concat(event.item, " - ").concat(side, ")");
+  switch (toolName) {
+    case 'agent':
+      var side = event.side === 'a' ? 'Attackers' : 'Defenders';
+      toolName += " (".concat(event.agent, " - ").concat(event.item, " - ").concat(side, ")");
+      break;
+
+    case 'pencil':
+      toolName += " ".concat(event.color);
+      break;
+
+    case 'text':
+      toolName += " ".concat(event.text, " - ").concat(event.color);
+      break;
+
+    case 'circle':
+      toolName += " ".concat(event.stroke);
+      break;
   }
 
   return /*#__PURE__*/_react.default.createElement("div", null, toolName);
@@ -55041,7 +55106,428 @@ var _react = _interopRequireDefault(require("react"));
 function Properties(props) {
   return /*#__PURE__*/_react.default.createElement(_icon.Icon, props, /*#__PURE__*/_react.default.createElement(_Properties.A4uProperties, null));
 }
-},{"@babel/runtime/helpers/interopRequireDefault":"node_modules/@babel/runtime/helpers/interopRequireDefault.js","@adobe/react-spectrum-workflow/dist/Properties":"node_modules/@adobe/react-spectrum-workflow/dist/Properties.js","@react-spectrum/icon":"node_modules/@react-spectrum/icon/dist/module.js","react":"node_modules/react/index.js"}],"src/img/maps/ascent.jpg":[function(require,module,exports) {
+},{"@babel/runtime/helpers/interopRequireDefault":"node_modules/@babel/runtime/helpers/interopRequireDefault.js","@adobe/react-spectrum-workflow/dist/Properties":"node_modules/@adobe/react-spectrum-workflow/dist/Properties.js","@react-spectrum/icon":"node_modules/@react-spectrum/icon/dist/module.js","react":"node_modules/react/index.js"}],"node_modules/@adobe/react-spectrum-workflow/dist/Draw.js":[function(require,module,exports) {
+/**
+* @adobe/react-spectrum-workflow (c) by Adobe
+* 
+* @adobe/react-spectrum-workflow is licensed under a
+* Creative Commons Attribution-NoDerivatives 4.0 International License.
+* 
+* You should have received a copy of the license along with this
+* work. If not, see <http://creativecommons.org/licenses/by-nd/4.0/>.
+**/
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.A4uDraw = A4uDraw;
+
+var _react = _interopRequireDefault(require("react"));
+
+var _util = require("./util");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
+function _extends() { _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
+
+function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
+
+function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) return {}; var target = {}; var sourceKeys = Object.keys(source); var key, i; for (i = 0; i < sourceKeys.length; i++) { key = sourceKeys[i]; if (excluded.indexOf(key) >= 0) continue; target[key] = source[key]; } return target; }
+
+function A4uDraw(_ref) {
+  var _ref$scale = _ref.scale,
+      scale = _ref$scale === void 0 ? 'M' : _ref$scale,
+      _ref$color = _ref.color,
+      color = _ref$color === void 0 ? 'LIGHT' : _ref$color,
+      props = _objectWithoutProperties(_ref, ["scale", "color"]);
+
+  return _react["default"].createElement("svg", _extends({
+    viewBox: _util.viewBoxes[scale]
+  }, props, props), _react["default"].createElement("path", {
+    d: "M20.454 8L5.084 23.372a.992.992 0 0 0-.251.421L2.055 33.1c-.114.376.459.85.783.85a.311.311 0 0 0 .062-.006c.276-.064 7.867-2.344 9.311-2.778a.984.984 0 0 0 .415-.25L28 15.544zM11.4 29.316c-2.161.649-4.862 1.465-6.729 2.022l2.009-6.73zM33.567 8.2L27.8 2.432a1.215 1.215 0 0 0-.866-.353H26.9a1.372 1.372 0 0 0-.927.407l-4.1 4.1 7.543 7.543 4.1-4.1a1.372 1.372 0 0 0 .4-.883 1.224 1.224 0 0 0-.349-.946z"
+  }));
+}
+},{"react":"node_modules/react/index.js","./util":"node_modules/@adobe/react-spectrum-workflow/dist/util.js"}],"node_modules/@spectrum-icons/workflow/Draw.js":[function(require,module,exports) {
+"use strict";
+
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
+exports.__esModule = true;
+exports.default = Draw;
+
+var _Draw = require("@adobe/react-spectrum-workflow/dist/Draw");
+
+var _icon = require("@react-spectrum/icon");
+
+var _react = _interopRequireDefault(require("react"));
+
+function Draw(props) {
+  return /*#__PURE__*/_react.default.createElement(_icon.Icon, props, /*#__PURE__*/_react.default.createElement(_Draw.A4uDraw, null));
+}
+},{"@babel/runtime/helpers/interopRequireDefault":"node_modules/@babel/runtime/helpers/interopRequireDefault.js","@adobe/react-spectrum-workflow/dist/Draw":"node_modules/@adobe/react-spectrum-workflow/dist/Draw.js","@react-spectrum/icon":"node_modules/@react-spectrum/icon/dist/module.js","react":"node_modules/react/index.js"}],"node_modules/@adobe/react-spectrum-workflow/dist/Circle.js":[function(require,module,exports) {
+/**
+* @adobe/react-spectrum-workflow (c) by Adobe
+* 
+* @adobe/react-spectrum-workflow is licensed under a
+* Creative Commons Attribution-NoDerivatives 4.0 International License.
+* 
+* You should have received a copy of the license along with this
+* work. If not, see <http://creativecommons.org/licenses/by-nd/4.0/>.
+**/
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.A4uCircle = A4uCircle;
+
+var _react = _interopRequireDefault(require("react"));
+
+var _util = require("./util");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
+function _extends() { _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
+
+function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
+
+function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) return {}; var target = {}; var sourceKeys = Object.keys(source); var key, i; for (i = 0; i < sourceKeys.length; i++) { key = sourceKeys[i]; if (excluded.indexOf(key) >= 0) continue; target[key] = source[key]; } return target; }
+
+function A4uCircle(_ref) {
+  var _ref$scale = _ref.scale,
+      scale = _ref$scale === void 0 ? 'M' : _ref$scale,
+      _ref$color = _ref.color,
+      color = _ref$color === void 0 ? 'LIGHT' : _ref$color,
+      props = _objectWithoutProperties(_ref, ["scale", "color"]);
+
+  return _react["default"].createElement("svg", _extends({
+    viewBox: _util.viewBoxes[scale]
+  }, props, props), _react["default"].createElement("circle", {
+    cx: 18,
+    cy: 18,
+    r: 16
+  }));
+}
+},{"react":"node_modules/react/index.js","./util":"node_modules/@adobe/react-spectrum-workflow/dist/util.js"}],"node_modules/@spectrum-icons/workflow/Circle.js":[function(require,module,exports) {
+"use strict";
+
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
+exports.__esModule = true;
+exports.default = Circle;
+
+var _Circle = require("@adobe/react-spectrum-workflow/dist/Circle");
+
+var _icon = require("@react-spectrum/icon");
+
+var _react = _interopRequireDefault(require("react"));
+
+function Circle(props) {
+  return /*#__PURE__*/_react.default.createElement(_icon.Icon, props, /*#__PURE__*/_react.default.createElement(_Circle.A4uCircle, null));
+}
+},{"@babel/runtime/helpers/interopRequireDefault":"node_modules/@babel/runtime/helpers/interopRequireDefault.js","@adobe/react-spectrum-workflow/dist/Circle":"node_modules/@adobe/react-spectrum-workflow/dist/Circle.js","@react-spectrum/icon":"node_modules/@react-spectrum/icon/dist/module.js","react":"node_modules/react/index.js"}],"node_modules/@adobe/react-spectrum-workflow/dist/Line.js":[function(require,module,exports) {
+/**
+* @adobe/react-spectrum-workflow (c) by Adobe
+* 
+* @adobe/react-spectrum-workflow is licensed under a
+* Creative Commons Attribution-NoDerivatives 4.0 International License.
+* 
+* You should have received a copy of the license along with this
+* work. If not, see <http://creativecommons.org/licenses/by-nd/4.0/>.
+**/
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.A4uLine = A4uLine;
+
+var _react = _interopRequireDefault(require("react"));
+
+var _util = require("./util");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
+function _extends() { _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
+
+function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
+
+function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) return {}; var target = {}; var sourceKeys = Object.keys(source); var key, i; for (i = 0; i < sourceKeys.length; i++) { key = sourceKeys[i]; if (excluded.indexOf(key) >= 0) continue; target[key] = source[key]; } return target; }
+
+function A4uLine(_ref) {
+  var _ref$scale = _ref.scale,
+      scale = _ref$scale === void 0 ? 'M' : _ref$scale,
+      _ref$color = _ref.color,
+      color = _ref$color === void 0 ? 'LIGHT' : _ref$color,
+      props = _objectWithoutProperties(_ref, ["scale", "color"]);
+
+  return _react["default"].createElement("svg", _extends({
+    viewBox: _util.viewBoxes[scale]
+  }, props, props), _react["default"].createElement("rect", {
+    height: 2,
+    rx: 0.5,
+    ry: 0.5,
+    transform: "rotate(-45 18 18)",
+    width: 39.598,
+    x: -1.799,
+    y: 17
+  }));
+}
+},{"react":"node_modules/react/index.js","./util":"node_modules/@adobe/react-spectrum-workflow/dist/util.js"}],"node_modules/@spectrum-icons/workflow/Line.js":[function(require,module,exports) {
+"use strict";
+
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
+exports.__esModule = true;
+exports.default = Line;
+
+var _Line = require("@adobe/react-spectrum-workflow/dist/Line");
+
+var _icon = require("@react-spectrum/icon");
+
+var _react = _interopRequireDefault(require("react"));
+
+function Line(props) {
+  return /*#__PURE__*/_react.default.createElement(_icon.Icon, props, /*#__PURE__*/_react.default.createElement(_Line.A4uLine, null));
+}
+},{"@babel/runtime/helpers/interopRequireDefault":"node_modules/@babel/runtime/helpers/interopRequireDefault.js","@adobe/react-spectrum-workflow/dist/Line":"node_modules/@adobe/react-spectrum-workflow/dist/Line.js","@react-spectrum/icon":"node_modules/@react-spectrum/icon/dist/module.js","react":"node_modules/react/index.js"}],"node_modules/@adobe/react-spectrum-workflow/dist/User.js":[function(require,module,exports) {
+/**
+* @adobe/react-spectrum-workflow (c) by Adobe
+* 
+* @adobe/react-spectrum-workflow is licensed under a
+* Creative Commons Attribution-NoDerivatives 4.0 International License.
+* 
+* You should have received a copy of the license along with this
+* work. If not, see <http://creativecommons.org/licenses/by-nd/4.0/>.
+**/
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.A4uUser = A4uUser;
+
+var _react = _interopRequireDefault(require("react"));
+
+var _util = require("./util");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
+function _extends() { _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
+
+function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
+
+function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) return {}; var target = {}; var sourceKeys = Object.keys(source); var key, i; for (i = 0; i < sourceKeys.length; i++) { key = sourceKeys[i]; if (excluded.indexOf(key) >= 0) continue; target[key] = source[key]; } return target; }
+
+function A4uUser(_ref) {
+  var _ref$scale = _ref.scale,
+      scale = _ref$scale === void 0 ? 'M' : _ref$scale,
+      _ref$color = _ref.color,
+      color = _ref$color === void 0 ? 'LIGHT' : _ref$color,
+      props = _objectWithoutProperties(_ref, ["scale", "color"]);
+
+  return _react["default"].createElement("svg", _extends({
+    viewBox: _util.viewBoxes[scale]
+  }, props, props), _react["default"].createElement("path", {
+    d: "M32.949 34a.993.993 0 0 0 1-1.053c-.661-7.184-8.027-9.631-10.278-9.827C22.026 22.977 22 21.652 22 20c0 0 3.532-3.943 3.532-8.958C25.532 5.617 22.445 2 18 2s-7.532 3.617-7.532 9.042C10.468 16.057 14 20 14 20c0 1.652-.026 2.977-1.674 3.12-2.251.2-9.617 2.643-10.278 9.827a.993.993 0 0 0 1 1.053z"
+  }));
+}
+},{"react":"node_modules/react/index.js","./util":"node_modules/@adobe/react-spectrum-workflow/dist/util.js"}],"node_modules/@spectrum-icons/workflow/User.js":[function(require,module,exports) {
+"use strict";
+
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
+exports.__esModule = true;
+exports.default = User;
+
+var _User = require("@adobe/react-spectrum-workflow/dist/User");
+
+var _icon = require("@react-spectrum/icon");
+
+var _react = _interopRequireDefault(require("react"));
+
+function User(props) {
+  return /*#__PURE__*/_react.default.createElement(_icon.Icon, props, /*#__PURE__*/_react.default.createElement(_User.A4uUser, null));
+}
+},{"@babel/runtime/helpers/interopRequireDefault":"node_modules/@babel/runtime/helpers/interopRequireDefault.js","@adobe/react-spectrum-workflow/dist/User":"node_modules/@adobe/react-spectrum-workflow/dist/User.js","@react-spectrum/icon":"node_modules/@react-spectrum/icon/dist/module.js","react":"node_modules/react/index.js"}],"node_modules/@adobe/react-spectrum-workflow/dist/ArrowUpRight.js":[function(require,module,exports) {
+/**
+* @adobe/react-spectrum-workflow (c) by Adobe
+* 
+* @adobe/react-spectrum-workflow is licensed under a
+* Creative Commons Attribution-NoDerivatives 4.0 International License.
+* 
+* You should have received a copy of the license along with this
+* work. If not, see <http://creativecommons.org/licenses/by-nd/4.0/>.
+**/
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.A4uArrowUpRight = A4uArrowUpRight;
+
+var _react = _interopRequireDefault(require("react"));
+
+var _util = require("./util");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
+function _extends() { _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
+
+function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
+
+function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) return {}; var target = {}; var sourceKeys = Object.keys(source); var key, i; for (i = 0; i < sourceKeys.length; i++) { key = sourceKeys[i]; if (excluded.indexOf(key) >= 0) continue; target[key] = source[key]; } return target; }
+
+function A4uArrowUpRight(_ref) {
+  var _ref$scale = _ref.scale,
+      scale = _ref$scale === void 0 ? 'M' : _ref$scale,
+      _ref$color = _ref.color,
+      color = _ref$color === void 0 ? 'LIGHT' : _ref$color,
+      props = _objectWithoutProperties(_ref, ["scale", "color"]);
+
+  return _react["default"].createElement("svg", _extends({
+    viewBox: _util.viewBoxes[scale]
+  }, props, props), _react["default"].createElement("path", {
+    d: "M26.2 18.284L12.181 32.3a1 1 0 0 1-1.414 0L3.7 25.233a1 1 0 0 1 0-1.414L17.716 9.8l-4.944-4.946A.5.5 0 0 1 13.125 4H32v18.875a.5.5 0 0 1-.854.353z"
+  }));
+}
+},{"react":"node_modules/react/index.js","./util":"node_modules/@adobe/react-spectrum-workflow/dist/util.js"}],"node_modules/@spectrum-icons/workflow/ArrowUpRight.js":[function(require,module,exports) {
+"use strict";
+
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
+exports.__esModule = true;
+exports.default = ArrowUpRight;
+
+var _ArrowUpRight = require("@adobe/react-spectrum-workflow/dist/ArrowUpRight");
+
+var _icon = require("@react-spectrum/icon");
+
+var _react = _interopRequireDefault(require("react"));
+
+function ArrowUpRight(props) {
+  return /*#__PURE__*/_react.default.createElement(_icon.Icon, props, /*#__PURE__*/_react.default.createElement(_ArrowUpRight.A4uArrowUpRight, null));
+}
+},{"@babel/runtime/helpers/interopRequireDefault":"node_modules/@babel/runtime/helpers/interopRequireDefault.js","@adobe/react-spectrum-workflow/dist/ArrowUpRight":"node_modules/@adobe/react-spectrum-workflow/dist/ArrowUpRight.js","@react-spectrum/icon":"node_modules/@react-spectrum/icon/dist/module.js","react":"node_modules/react/index.js"}],"node_modules/@adobe/react-spectrum-workflow/dist/Text.js":[function(require,module,exports) {
+/**
+* @adobe/react-spectrum-workflow (c) by Adobe
+* 
+* @adobe/react-spectrum-workflow is licensed under a
+* Creative Commons Attribution-NoDerivatives 4.0 International License.
+* 
+* You should have received a copy of the license along with this
+* work. If not, see <http://creativecommons.org/licenses/by-nd/4.0/>.
+**/
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.A4uText = A4uText;
+
+var _react = _interopRequireDefault(require("react"));
+
+var _util = require("./util");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
+function _extends() { _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
+
+function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
+
+function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) return {}; var target = {}; var sourceKeys = Object.keys(source); var key, i; for (i = 0; i < sourceKeys.length; i++) { key = sourceKeys[i]; if (excluded.indexOf(key) >= 0) continue; target[key] = source[key]; } return target; }
+
+function A4uText(_ref) {
+  var _ref$scale = _ref.scale,
+      scale = _ref$scale === void 0 ? 'M' : _ref$scale,
+      _ref$color = _ref.color,
+      color = _ref$color === void 0 ? 'LIGHT' : _ref$color,
+      props = _objectWithoutProperties(_ref, ["scale", "color"]);
+
+  return _react["default"].createElement("svg", _extends({
+    viewBox: _util.viewBoxes[scale]
+  }, props, props), _react["default"].createElement("path", {
+    d: "M5 4a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V8h8v20h-3a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1h-3V8h8v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z"
+  }));
+}
+},{"react":"node_modules/react/index.js","./util":"node_modules/@adobe/react-spectrum-workflow/dist/util.js"}],"node_modules/@spectrum-icons/workflow/Text.js":[function(require,module,exports) {
+"use strict";
+
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
+exports.__esModule = true;
+exports.default = Text;
+
+var _Text = require("@adobe/react-spectrum-workflow/dist/Text");
+
+var _icon = require("@react-spectrum/icon");
+
+var _react = _interopRequireDefault(require("react"));
+
+function Text(props) {
+  return /*#__PURE__*/_react.default.createElement(_icon.Icon, props, /*#__PURE__*/_react.default.createElement(_Text.A4uText, null));
+}
+},{"@babel/runtime/helpers/interopRequireDefault":"node_modules/@babel/runtime/helpers/interopRequireDefault.js","@adobe/react-spectrum-workflow/dist/Text":"node_modules/@adobe/react-spectrum-workflow/dist/Text.js","@react-spectrum/icon":"node_modules/@react-spectrum/icon/dist/module.js","react":"node_modules/react/index.js"}],"node_modules/@adobe/react-spectrum-workflow/dist/Alert.js":[function(require,module,exports) {
+/**
+* @adobe/react-spectrum-workflow (c) by Adobe
+* 
+* @adobe/react-spectrum-workflow is licensed under a
+* Creative Commons Attribution-NoDerivatives 4.0 International License.
+* 
+* You should have received a copy of the license along with this
+* work. If not, see <http://creativecommons.org/licenses/by-nd/4.0/>.
+**/
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.A4uAlert = A4uAlert;
+
+var _react = _interopRequireDefault(require("react"));
+
+var _util = require("./util");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
+function _extends() { _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
+
+function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
+
+function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) return {}; var target = {}; var sourceKeys = Object.keys(source); var key, i; for (i = 0; i < sourceKeys.length; i++) { key = sourceKeys[i]; if (excluded.indexOf(key) >= 0) continue; target[key] = source[key]; } return target; }
+
+function A4uAlert(_ref) {
+  var _ref$scale = _ref.scale,
+      scale = _ref$scale === void 0 ? 'M' : _ref$scale,
+      _ref$color = _ref.color,
+      color = _ref$color === void 0 ? 'LIGHT' : _ref$color,
+      props = _objectWithoutProperties(_ref, ["scale", "color"]);
+
+  return _react["default"].createElement("svg", _extends({
+    viewBox: _util.viewBoxes[scale]
+  }, props, props), _react["default"].createElement("path", {
+    d: "M17.127 2.579L.4 32.512A1 1 0 0 0 1.272 34h33.456a1 1 0 0 0 .872-1.488L18.873 2.579a1 1 0 0 0-1.746 0zM20 29.5a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5zm0-6a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-12a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5z"
+  }));
+}
+},{"react":"node_modules/react/index.js","./util":"node_modules/@adobe/react-spectrum-workflow/dist/util.js"}],"node_modules/@spectrum-icons/workflow/Alert.js":[function(require,module,exports) {
+"use strict";
+
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
+exports.__esModule = true;
+exports.default = Alert;
+
+var _Alert = require("@adobe/react-spectrum-workflow/dist/Alert");
+
+var _icon = require("@react-spectrum/icon");
+
+var _react = _interopRequireDefault(require("react"));
+
+function Alert(props) {
+  return /*#__PURE__*/_react.default.createElement(_icon.Icon, props, /*#__PURE__*/_react.default.createElement(_Alert.A4uAlert, null));
+}
+},{"@babel/runtime/helpers/interopRequireDefault":"node_modules/@babel/runtime/helpers/interopRequireDefault.js","@adobe/react-spectrum-workflow/dist/Alert":"node_modules/@adobe/react-spectrum-workflow/dist/Alert.js","@react-spectrum/icon":"node_modules/@react-spectrum/icon/dist/module.js","react":"node_modules/react/index.js"}],"src/img/maps/ascent.jpg":[function(require,module,exports) {
 module.exports = "/ascent.e1cb8da0.jpg";
 },{}],"src/img/maps/bind.jpg":[function(require,module,exports) {
 module.exports = "/bind.609989ab.jpg";
@@ -55076,6 +55562,20 @@ var _History = _interopRequireDefault(require("./History"));
 var _constants = require("../constants");
 
 var _Properties = _interopRequireDefault(require("@spectrum-icons/workflow/Properties"));
+
+var _Draw = _interopRequireDefault(require("@spectrum-icons/workflow/Draw"));
+
+var _Circle = _interopRequireDefault(require("@spectrum-icons/workflow/Circle"));
+
+var _Line = _interopRequireDefault(require("@spectrum-icons/workflow/Line"));
+
+var _User = _interopRequireDefault(require("@spectrum-icons/workflow/User"));
+
+var _ArrowUpRight = _interopRequireDefault(require("@spectrum-icons/workflow/ArrowUpRight"));
+
+var _Text = _interopRequireDefault(require("@spectrum-icons/workflow/Text"));
+
+var _Alert = _interopRequireDefault(require("@spectrum-icons/workflow/Alert"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -55117,11 +55617,15 @@ function getAbility(agent, abilityName) {
   });
 }
 
+function getSize(tool, size) {
+  return (_constants.sizing[tool] || _constants.sizing.default)[size];
+}
+
 function Valostrator() {
   var ref = (0, _react.useRef)();
   var textRef = (0, _react.useRef)();
 
-  var _useState = (0, _react.useState)(20),
+  var _useState = (0, _react.useState)('M'),
       _useState2 = _slicedToArray(_useState, 2),
       size = _useState2[0],
       setSize = _useState2[1];
@@ -55141,119 +55645,140 @@ function Valostrator() {
       map = _useState8[0],
       setMap = _useState8[1];
 
-  var _useState9 = (0, _react.useState)(null),
+  var _useState9 = (0, _react.useState)([]),
       _useState10 = _slicedToArray(_useState9, 2),
-      createArrow = _useState10[0],
-      setCreateArrow = _useState10[1]; // swithc to start point
+      history = _useState10[0],
+      setHistory = _useState10[1];
 
-
-  var _useState11 = (0, _react.useState)([]),
+  var _useState11 = (0, _react.useState)(Object.keys(_agents.agentLookup)[0]),
       _useState12 = _slicedToArray(_useState11, 2),
-      history = _useState12[0],
-      setHistory = _useState12[1];
+      agent = _useState12[0],
+      setAgent = _useState12[1];
 
-  var _useState13 = (0, _react.useState)(null),
+  var _useState13 = (0, _react.useState)('a'),
       _useState14 = _slicedToArray(_useState13, 2),
-      historyCursor = _useState14[0],
-      setHistoryCursor = _useState14[1];
+      side = _useState14[0],
+      setSide = _useState14[1];
 
-  var _useState15 = (0, _react.useState)(Object.keys(_agents.agentLookup)[0]),
+  var _useState15 = (0, _react.useState)('icon'),
       _useState16 = _slicedToArray(_useState15, 2),
-      agent = _useState16[0],
-      setAgent = _useState16[1];
+      agentItem = _useState16[0],
+      setAgentItem = _useState16[1];
 
-  var _useState17 = (0, _react.useState)('a'),
+  var _useState17 = (0, _react.useState)(null),
       _useState18 = _slicedToArray(_useState17, 2),
-      side = _useState18[0],
-      setSide = _useState18[1];
+      acceptText = _useState18[0],
+      setAcceptingText = _useState18[1]; // swithc to start point
 
-  var _useState19 = (0, _react.useState)('icon'),
+
+  var _useState19 = (0, _react.useState)(false),
       _useState20 = _slicedToArray(_useState19, 2),
-      agentItem = _useState20[0],
-      setAgentItem = _useState20[1];
+      useTeamColor = _useState20[0],
+      setUseTeamColor = _useState20[1];
 
-  var _useState21 = (0, _react.useState)(null),
+  var _useState21 = (0, _react.useState)(false),
       _useState22 = _slicedToArray(_useState21, 2),
-      acceptText = _useState22[0],
-      setAcceptingText = _useState22[1]; // swithc to start point
+      showIcons = _useState22[0],
+      setShowIcons = _useState22[1];
 
-
-  var _useState23 = (0, _react.useState)(false),
+  var _useState23 = (0, _react.useState)(null),
       _useState24 = _slicedToArray(_useState23, 2),
-      useTeamColor = _useState24[0],
-      setUseTeamColor = _useState24[1];
+      startPoint = _useState24[0],
+      setStartPoint = _useState24[1];
 
   var _useState25 = (0, _react.useState)(false),
       _useState26 = _slicedToArray(_useState25, 2),
-      showIcons = _useState26[0],
-      setShowIcons = _useState26[1];
+      penDown = _useState26[0],
+      setPenDown = _useState26[1]; // const handleKeyboard = evt => {
+  //   console.log('pressed', evt.key)
+  //   switch(evt.key) {
+  //     case 'Escape':
+  //       if (createArrow) {
+  //         setCreateArrow(false);
+  //       } else {
+  //         onClear();
+  //       }
+  //       break;
+  //     case '1':
+  //       setSize(10);
+  //       break;
+  //     case '2':
+  //       setSize(20);
+  //       break;
+  //     case '3':
+  //       setSize(30);
+  //       break;
+  //     case '4':
+  //       setSize(50);
+  //       break;
+  //     case 'c':
+  //       nextColor();
+  //       break;
+  //     case 's':
+  //       setSide(side === 'a' ? 'd' : 'a');
+  //       break;
+  //   }
+  //   evt.stopPropagation();
+  // };
+  // const nextColor = useCallback(() => {
+  //   console.log('color in cb', color)
+  //   let colorIndex = colors.findIndex(function (c) {return  c === color});
+  //   console.log('colorindex', colorIndex, color)
+  //   colorIndex++;
+  //   if (colorIndex > colors.length - 1) {
+  //     colorIndex = 0;
+  //   }
+  //   console.log('setting color to ', colors[colorIndex])
+  //   setColor(colors[colorIndex]);
+  // }, [color]);
 
-  var _useState27 = (0, _react.useState)(null),
-      _useState28 = _slicedToArray(_useState27, 2),
-      startPoint = _useState28[0],
-      setStartPoint = _useState28[1];
 
-  var handleKeyboard = function handleKeyboard(evt) {
-    console.log('pressed', evt.key);
+  var linePoints = [];
 
-    switch (evt.key) {
-      case 'Escape':
-        if (createArrow) {
-          setCreateArrow(false);
-        } else {
-          onClear();
-        }
-
-        break;
-
-      case '1':
-        setSize(10);
-        break;
-
-      case '2':
-        setSize(20);
-        break;
-
-      case '3':
-        setSize(30);
-        break;
-
-      case '4':
-        setSize(50);
-        break;
-
-      case 'c':
-        nextColor();
-        break;
-
-      case 's':
-        setSide(side === 'a' ? 'd' : 'a');
-        break;
-    }
-
-    evt.stopPropagation();
+  var onMouseDown = function onMouseDown() {
+    return tool === 'pencil' && setPenDown(true);
   };
 
-  var nextColor = (0, _react.useCallback)(function () {
-    console.log('color in cb', color);
-    var colorIndex = colors.findIndex(function (c) {
-      return c === color;
-    });
-    console.log('colorindex', colorIndex, color);
-    colorIndex++;
-
-    if (colorIndex > colors.length - 1) {
-      colorIndex = 0;
+  var onMouseUp = function onMouseUp() {
+    if (!penDown) {
+      return;
     }
 
-    console.log('setting color to ', colors[colorIndex]);
-    setColor(colors[colorIndex]);
-  }, [color]); // useEffect(() => {
+    ;
+    penDown && setPenDown(false);
+    redrawHistory(history, {
+      useTeamColor: useTeamColor,
+      showIcons: showIcons
+    });
+    var canvas = ref.current;
+    var ctx = canvas.getContext('2d');
+    var historyEvent = (0, _canvasFunctions.addPath)(ctx, linePoints, getSize('pencil', size), color);
+    setHistory([historyEvent].concat(_toConsumableArray(history)));
+  };
+
+  var onMouseMove = function onMouseMove(evt) {
+    if (!penDown) {
+      return;
+    }
+
+    var canvas = ref.current;
+    var rect = canvas.getBoundingClientRect();
+    var ctx = canvas.getContext('2d');
+
+    if (linePoints.length) {
+      var lastPoint = linePoints[linePoints.length - 1];
+      (0, _canvasFunctions.addLine)(ctx, lastPoint, [evt.clientX - rect.x, evt.clientY - rect.y], getSize('pencil', size), color);
+    }
+
+    linePoints.push([evt.clientX - rect.x, evt.clientY - rect.y]);
+    console.log(linePoints.length);
+  }; // useEffect(() => {
   //   document.addEventListener('keydown', handleKeyboard);
   //   return () => {
   //     document.removeEventListener('keydown', handleKeyboard);
   //   };
   // }, [color, side])
+
 
   var onClick = function onClick(evt) {
     if (!ref || !ref.current) {
@@ -55331,11 +55856,11 @@ function Valostrator() {
         }
 
         (0, _canvasFunctions.addAnchorPoint)(ctx, xCoord, yCoord, color);
-        setAcceptingText([xCoord, yCoord]);
+        setStartPoint([xCoord, yCoord]);
         break;
 
-      default:
-        historyEvent = (0, _canvasFunctions.addCircle)(ctx, xCoord, yCoord, size, '', '', color);
+      case 'circle':
+        historyEvent = (0, _canvasFunctions.addCircle)(ctx, xCoord, yCoord, getSize(tool, size), '', '', color);
     } // add to front
 
 
@@ -55358,8 +55883,6 @@ function Valostrator() {
     clearCanvas();
     var ctx = ref.current.getContext('2d');
     history.map(function (evt) {
-      console.log('evt', evt);
-
       switch (evt.tool) {
         case 'arrow':
           (0, _canvasFunctions.addArrow)(ctx, evt.start[0], evt.start[1], evt.end[0], evt.end[1], evt.color);
@@ -55391,6 +55914,10 @@ function Valostrator() {
 
         case 'spike':
           (0, _canvasFunctions.addSpike)(ctx, evt.center[0], evt[1]);
+          return;
+
+        case 'pencil':
+          (0, _canvasFunctions.addPath)(ctx, evt.path, evt.size, evt.color);
           return;
       }
     });
@@ -55458,14 +55985,17 @@ function Valostrator() {
     console.log('evtkeycode', evt.keyCode);
 
     if (evt.keyCode === 13) {
-      setAcceptingText(null);
+      // setAcceptingText(null);
+      setStartPoint(null);
       console.log('submitting', evt.target.value);
       redrawHistory(history, {
         showIcons: showIcons,
         useTeamColor: useTeamColor
       });
       var ctx = ref.current.getContext('2d');
-      var historyEvent = (0, _canvasFunctions.addText)(ctx, acceptText[0], acceptText[1], size, evt.target.value, color);
+
+      var historyEvent = _canvasFunctions.addText.apply(void 0, [ctx].concat(_toConsumableArray(startPoint), [getSize(tool, size), evt.target.value, color]));
+
       setHistory([historyEvent].concat(_toConsumableArray(history)));
       evt.target.value = '';
     }
@@ -55504,8 +56034,10 @@ function Valostrator() {
 
   return /*#__PURE__*/_react.default.createElement(_reactSpectrum.Provider, {
     theme: _reactSpectrum.defaultTheme,
-    width: "100%",
-    height: "100vh"
+    position: "sticky",
+    top: 0,
+    bottom: 0,
+    width: "100%"
   }, /*#__PURE__*/_react.default.createElement(_ValostratorContext.ValostratorContextProvider, {
     history: history,
     onHistoryChange: onHistoryChange,
@@ -55538,18 +56070,21 @@ function Valostrator() {
     isEmphasized: startPoint,
     onAction: onToolChange,
     selectionMode: "single",
-    selectedKeys: [tool]
+    selectedKeys: [tool],
+    density: "compact"
   }, /*#__PURE__*/_react.default.createElement(_reactSpectrum.Item, {
+    key: "pencil"
+  }, /*#__PURE__*/_react.default.createElement(_Draw.default, null), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Text, null, "Pencil")), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Item, {
     key: "circle"
-  }, "Circle"), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Item, {
+  }, /*#__PURE__*/_react.default.createElement(_Circle.default, null), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Text, null, "Circle")), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Item, {
     key: "arrow"
-  }, "Arrow"), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Item, {
+  }, /*#__PURE__*/_react.default.createElement(_ArrowUpRight.default, null), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Text, null, "Arrow")), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Item, {
     key: "text"
-  }, "Text"), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Item, {
+  }, /*#__PURE__*/_react.default.createElement(_Text.default, null), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Text, null, "Text")), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Item, {
     key: "agent"
-  }, "Agent"), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Item, {
+  }, /*#__PURE__*/_react.default.createElement(_User.default, null), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Text, null, "Agent")), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Item, {
     key: "spike"
-  }, "Spike"))), tool === 'agent' && /*#__PURE__*/_react.default.createElement(_react.default.Fragment, null, /*#__PURE__*/_react.default.createElement(_reactSpectrum.Flex, {
+  }, /*#__PURE__*/_react.default.createElement(_Alert.default, null), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Text, null, "Spike")))), tool === 'agent' && /*#__PURE__*/_react.default.createElement(_react.default.Fragment, null, /*#__PURE__*/_react.default.createElement(_reactSpectrum.Flex, {
     gap: 20,
     marginBottom: 8
   }, /*#__PURE__*/_react.default.createElement(_reactSpectrum.ActionGroup, {
@@ -55598,7 +56133,7 @@ function Valostrator() {
   }, "Use team color for abilities"), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Checkbox, {
     isSelected: showIcons,
     onChange: onShowIconChange
-  }, "Show icons on all abilities")))))), ['arrow', 'circle', 'text'].includes(tool) && /*#__PURE__*/_react.default.createElement(_reactSpectrum.Flex, {
+  }, "Show icons on all abilities")))))), ['arrow', 'circle', 'pencil', 'text'].includes(tool) && /*#__PURE__*/_react.default.createElement(_reactSpectrum.Flex, {
     gap: 20,
     marginBottom: 8
   }, /*#__PURE__*/_react.default.createElement(_reactSpectrum.View, null, /*#__PURE__*/_react.default.createElement(_reactSpectrum.ActionGroup, {
@@ -55607,13 +56142,13 @@ function Valostrator() {
     selectedKeys: [size.toString()],
     density: "compact"
   }, /*#__PURE__*/_react.default.createElement(_reactSpectrum.Item, {
-    key: "10"
+    key: "S"
   }, "S"), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Item, {
-    key: "20"
+    key: "M"
   }, "M"), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Item, {
-    key: "30"
+    key: "L"
   }, "L"), /*#__PURE__*/_react.default.createElement(_reactSpectrum.Item, {
-    key: "50"
+    key: "XL"
   }, "XL"))), /*#__PURE__*/_react.default.createElement(_reactSpectrum.ActionGroup, {
     onAction: onColorChange,
     selectionMode: "single",
@@ -55629,7 +56164,7 @@ function Valostrator() {
   })), tool === 'text' && /*#__PURE__*/_react.default.createElement(_reactSpectrum.TextField, {
     ref: textRef,
     onKeyDown: onTextInput,
-    isDisabled: !acceptText
+    isDisabled: !startPoint
   })), /*#__PURE__*/_react.default.createElement("div", {
     style: {
       display: 'inline-block',
@@ -55647,6 +56182,9 @@ function Valostrator() {
   }), /*#__PURE__*/_react.default.createElement("canvas", {
     ref: ref,
     onClick: onClick,
+    onMouseDown: onMouseDown,
+    onMouseUp: onMouseUp,
+    onMouseMove: onMouseMove,
     width: _constants.canvasX,
     height: _constants.canvasY,
     style: {
@@ -55655,7 +56193,7 @@ function Valostrator() {
     }
   }))), /*#__PURE__*/_react.default.createElement(_History.default, null)))));
 }
-},{"react":"node_modules/react/index.js","@adobe/react-spectrum":"node_modules/@adobe/react-spectrum/dist/module.js","./Color":"src/components/Color.jsx","./Agent":"src/components/Agent.jsx","../agents":"src/agents.jsx","./canvas/canvasFunctions":"src/components/canvas/canvasFunctions.jsx","./ValostratorContext":"src/components/ValostratorContext.jsx","./History":"src/components/History.jsx","../constants":"src/constants.jsx","@spectrum-icons/workflow/Properties":"node_modules/@spectrum-icons/workflow/Properties.js","../img/maps/ascent.jpg":"src/img/maps/ascent.jpg","../img/maps/bind.jpg":"src/img/maps/bind.jpg","../img/maps/haven.jpg":"src/img/maps/haven.jpg","../img/maps/split.jpg":"src/img/maps/split.jpg"}],"src/Main.jsx":[function(require,module,exports) {
+},{"react":"node_modules/react/index.js","@adobe/react-spectrum":"node_modules/@adobe/react-spectrum/dist/module.js","./Color":"src/components/Color.jsx","./Agent":"src/components/Agent.jsx","../agents":"src/agents.jsx","./canvas/canvasFunctions":"src/components/canvas/canvasFunctions.jsx","./ValostratorContext":"src/components/ValostratorContext.jsx","./History":"src/components/History.jsx","../constants":"src/constants.jsx","@spectrum-icons/workflow/Properties":"node_modules/@spectrum-icons/workflow/Properties.js","@spectrum-icons/workflow/Draw":"node_modules/@spectrum-icons/workflow/Draw.js","@spectrum-icons/workflow/Circle":"node_modules/@spectrum-icons/workflow/Circle.js","@spectrum-icons/workflow/Line":"node_modules/@spectrum-icons/workflow/Line.js","@spectrum-icons/workflow/User":"node_modules/@spectrum-icons/workflow/User.js","@spectrum-icons/workflow/ArrowUpRight":"node_modules/@spectrum-icons/workflow/ArrowUpRight.js","@spectrum-icons/workflow/Text":"node_modules/@spectrum-icons/workflow/Text.js","@spectrum-icons/workflow/Alert":"node_modules/@spectrum-icons/workflow/Alert.js","../img/maps/ascent.jpg":"src/img/maps/ascent.jpg","../img/maps/bind.jpg":"src/img/maps/bind.jpg","../img/maps/haven.jpg":"src/img/maps/haven.jpg","../img/maps/split.jpg":"src/img/maps/split.jpg"}],"src/Main.jsx":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -55718,7 +56256,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55967" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61531" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
